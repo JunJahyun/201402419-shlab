@@ -170,9 +170,9 @@ int main(int argc, char **argv)
 void eval(char *cmdline) 
 {
 	char *argv[MAXARGS];
+	pid_t pid;
 
 	parseline(cmdline, argv);
-	
 	
 	if(!builtin_cmd(argv)){
 		if((pid=fork())==0){
