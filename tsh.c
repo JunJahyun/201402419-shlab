@@ -171,8 +171,9 @@ void eval(char *cmdline)
 {
 	char *argv[MAXARGS];
 	pid_t pid;
+	int bg;
 
-	parseline(cmdline, argv);
+	bg = parseline(cmdline, argv);
 	
 	if(!builtin_cmd(argv)){
 		if((pid=fork())==0){
@@ -181,6 +182,17 @@ void eval(char *cmdline)
 				exit(0);
 			}
 		}
+	}
+
+	if(!bg){
+		int status;
+		if(waitpid(pid,&status,0)<0){
+			unix_error("waitfg : waitpid error");
+		}
+	}
+	else{
+		addjob(jobs, pid, BG, cmdline);
+		printf("(%d) (%d) %s", pid2jid(pid), pid, cmdline);
 	}
 	return;
 }
