@@ -175,6 +175,9 @@ void eval(char *cmdline)
 
 	bg = parseline(cmdline, argv);
 	
+	if(argv[0] == NULL)
+		return;
+
 	if(!builtin_cmd(argv)){
 		if((pid=fork())==0){
 			if((execve(argv[0], argv, environ)<0)){
@@ -182,18 +185,19 @@ void eval(char *cmdline)
 				exit(0);
 			}
 		}
-	}
 
-	if(!bg){
-		int status;
-		if(waitpid(pid,&status,0)<0){
-			unix_error("waitfg : waitpid error");
+		if(!bg){
+			int status;
+			if(waitpid(pid, &status, 0) <0){
+				unix_error("waitfg: waitpid error");
+			}
+		}
+		else{
+			addjob(jobs, pid, BG, cmdline);
+			printf("(%d) (%d) %s", pid2jid(pid), pid, cmdline);
 		}
 	}
-	else{
-		addjob(jobs, pid, BG, cmdline);
-		printf("(%d) (%d) %s", pid2jid(pid), pid, cmdline);
-	}
+
 	return;
 }
 
@@ -204,6 +208,11 @@ int builtin_cmd(char **argv)
 	if(!strcmp(cmd, "quit")){
 		exit(0);
 	}
+	if(!strcmp(cmd,"jobs")){
+		listjobs(jobs, 1);
+		return 1;
+	}
+
 	return 0;
 }
 
