@@ -225,6 +225,23 @@ int builtin_cmd(char **argv)
 
 void waitfg(pid_t pid, int output_fd)
 {
+	struct job_t *j = getjobpid(jobs, pid);
+	char buf[MAXLINE];
+
+	if(!j){
+		return;
+	}
+	while(j->pid == pid && j->state == FG){
+		sleep(1);
+	}
+	if(verbose){
+		memset(buf, '\0', MAXLINE);
+		sprintf(buf, "waitfg: Process (%d) no longer the fg process:q\n", pid);
+		if(write(output_fd, buf, strlen(buf)) < 0) {
+			fprintf(stderr, "Error writing to file\n");
+			exit(1);
+		}
+	}
 	return;
 }
 
@@ -245,10 +262,10 @@ void sigchld_handler(int sig)
 	pid_t pid;
 	while((pid = waitpid (-1, &status,WNOHANG|WUNTRACED))>0){
 		if(WIFSIGNALED (status)){
-			printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid, WTERMSIG(status));
+			printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid), pid, WTERMSIG(status));
 			deletejob(jobs, pid);
 		}
-		if(WIFEXITED(status)){
+		else if(WIFEXITED(status)){
 			deletejob(jobs, pid);
 		}
 	}
