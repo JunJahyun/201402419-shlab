@@ -243,7 +243,7 @@ void sigchld_handler(int sig)
 {
 	int status;
 	pid_t pid;
-	while((pid = waitpid (-1, status,WNOHANG|WUNTRACED))>0){
+	while((pid = waitpid (-1, &status,WNOHANG|WUNTRACED))>0){
 		if(WIFSIGNALED (status)){
 			printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid, WTERMSIG(status));
 			deletejob(jobs, pid);
