@@ -172,14 +172,19 @@ void eval(char *cmdline)
 	char *argv[MAXARGS];
 	pid_t pid;
 	int bg;
-
 	bg = parseline(cmdline, argv);
 	
-	if(argv[0] == NULL)
-		return;
+	sigset_t mask;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &mask, NULL);
 
 	if(!builtin_cmd(argv)){
 		if((pid=fork())==0){
+			sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
 			if((execve(argv[0], argv, environ)<0)){
 				printf("%s : Command not found\n", argv[0]);
 				exit(0);
@@ -188,12 +193,14 @@ void eval(char *cmdline)
 
 		if(!bg){
 			int status;
-			if(waitpid(pid, &status, 0) <0){
-				unix_error("waitfg: waitpid error");
-			}
+			addjob(jobs, pid, FG, cmdline);
+			sigprocmask(SIG_UNBLOCK, &mask, NULL);
+			waitfg(pid, 1);
+		
 		}
 		else{
 			addjob(jobs, pid, BG, cmdline);
+			sigprocmask(SIG_UNBLOCK, &mask, NULL);
 			printf("(%d) (%d) %s", pid2jid(pid), pid, cmdline);
 		}
 	}
@@ -234,6 +241,17 @@ void waitfg(pid_t pid, int output_fd)
  */
 void sigchld_handler(int sig) 
 {
+	int status;
+	pid_t pid;
+	while((pid = waitpid (-1, status,WNOHANG|WUNTRACED))>0){
+		if(WIFSIGNALED (status)){
+			printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid, WTERMSIG(status));
+			deletejob(jobs, pid);
+		}
+		if(WIFEXITED(status)){
+			deletejob(jobs, pid);
+		}
+	}
 	return;
 }
 
@@ -244,6 +262,10 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig) 
 {
+	pid_t pid;
+	if((pid = fgpid(jobs))>0){
+	kill(pid, SIGINT);
+	}
 	return;
 }
 
