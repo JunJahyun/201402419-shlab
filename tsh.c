@@ -224,6 +224,10 @@ int builtin_cmd(char **argv)
 		commandBG(argv);
 		return 1;
 	}
+	if(!strcmp(argv[0], "fg")){
+		commandFG(argv);
+		return1;
+	}
 	return 0;
 }
 
@@ -236,6 +240,16 @@ void commandBG(char **argv){
 	t->state = BG;
 	printf("[%d] (%d) %s", jid, t->pid, t->cmdline);
 }
+
+void commandFG(char **argv){
+	pid_t jid;
+	struct job_t *t;
+	jid = atoi(&argv[1][1]);
+	t = getjobjid(jobs, jid);
+	kill(-(t->pid), SIGCONT);
+	t->state = FG;
+}
+
 
 void waitfg(pid_t pid, int output_fd)
 {
