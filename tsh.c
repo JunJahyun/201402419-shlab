@@ -226,7 +226,7 @@ int builtin_cmd(char **argv)
 	}
 	if(!strcmp(argv[0], "fg")){
 		commandFG(argv);
-		return1;
+		return 1;
 	}
 	return 0;
 }
