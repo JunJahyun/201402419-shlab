@@ -181,7 +181,8 @@ void eval(char *cmdline)
 	sigaddset(&mask, SIGCHLD);
 	sigaddset(&mask, SIGTSTP);
 	sigprocmask(SIG_BLOCK, &mask, NULL);
-
+	
+	setpgid(0,0);
 	if(!builtin_cmd(argv)){
 		if((pid=fork())==0){
 			sigprocmask(SIG_UNBLOCK, &mask, NULL);
@@ -316,7 +317,7 @@ void sigint_handler(int sig)
 {
 	pid_t pid;
 	if((pid = fgpid(jobs))>0){
-	kill(pid, SIGINT);
+	kill(-pid, SIGINT);
 	}
 	return;
 }
