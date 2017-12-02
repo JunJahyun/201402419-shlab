@@ -182,8 +182,9 @@ void eval(char *cmdline)
 	sigaddset(&mask, SIGTSTP);
 	sigprocmask(SIG_BLOCK, &mask, NULL);
 	
-	setpgid(0,0);
+
 	if(!builtin_cmd(argv)){
+		setpgid(0,0);
 		if((pid=fork())==0){
 			sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
